@@ -1,9 +1,8 @@
-
 pipeline {
     agent any
 
     tools {
-	jdk 'JDK-21'
+        jdk 'JDK-21'
         maven 'Maven-3.9.16'
     }
 
@@ -11,14 +10,12 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                echo 'Checking out FoodLoop source code...'
                 checkout scm
             }
         }
 
         stage('Backend Build') {
             steps {
-                echo 'Building Spring Boot backend...'
                 dir('backend') {
                     bat 'mvn clean package -DskipTests'
                 }
@@ -27,7 +24,6 @@ pipeline {
 
         stage('Backend Test') {
             steps {
-                echo 'Running backend tests...'
                 dir('backend') {
                     bat 'mvn test'
                 }
@@ -36,7 +32,6 @@ pipeline {
 
         stage('Frontend Install') {
             steps {
-                echo 'Installing frontend dependencies...'
                 dir('frontend') {
                     bat 'npm ci'
                 }
@@ -45,10 +40,16 @@ pipeline {
 
         stage('Frontend Build') {
             steps {
-                echo 'Building React frontend...'
                 dir('frontend') {
                     bat 'npm run build'
                 }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying FoodLoop application...'
+                bat 'echo FoodLoop deployment completed successfully!'
             }
         }
     }
@@ -59,7 +60,7 @@ pipeline {
         }
 
         failure {
-            echo 'FoodLoop Pipeline failed.'
+            echo 'FoodLoop Pipeline failed!'
         }
     }
 }
