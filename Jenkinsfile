@@ -51,6 +51,22 @@ pipeline {
             }
         }
 
+        stage('Nuclei Security Scan') {
+            steps {
+                echo 'Starting Nuclei security scan on FoodLoop...'
+                bat 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File nuclei-scan.ps1'
+            }
+            post {
+                always {
+                    archiveArtifacts(
+                        artifacts: 'nuclei-results.txt,nuclei-preview.log,nuclei-preview-error.log',
+                        allowEmptyArchive: true
+                    )
+                }
+            }
+        }
+
+
         stage('Deploy') {
             steps {
                 echo 'Deploying FoodLoop application...'
