@@ -9,23 +9,38 @@ $stdout = Join-Path $env:WORKSPACE "nuclei-preview.log"
 $stderr = Join-Path $env:WORKSPACE "nuclei-preview-error.log"
 
 if (!(Test-Path $nuclei)) {
-    throw "Nuclei executable not found at $nuclei. Check the Jenkins service account permissions and path."
+    throw "SCAN ERROR: Nuclei executable not found at $nuclei"
 }
 
 if (!(Test-Path (Join-Path $frontendDir "dist\index.html"))) {
-    throw "Frontend build not found. Run the Frontend Build stage first."
+    throw "SCAN ERROR: Frontend build not found."
 }
 
 $node = (Get-Command node.exe -ErrorAction Stop).Source
 $vite = Join-Path $frontendDir "node_modules\vite\bin\vite.js"
 
 if (!(Test-Path $vite)) {
-    throw "Vite executable not found. Check frontend dependencies."
+    throw "SCAN ERROR: Vite executable not found."
 }
+
+# Remove previous results so old findings cannot affect this scan.
+if (Test-Path $result) {
+    Remove-Item $result -Force
+}
+
+# Create a fresh report, including when there are no findings.
+New-Item -ItemType File -Path $result -Force | Out-Null
 
 $server = $null
 
 try {
+    Write-Host "========================================"
+    Write-Host " FOODLOOP SECURITY SCAN"
+    Write-Host " Target: $target"
+    Write-Host " Checks: misconfiguration and exposure"
+    Write-Host " Severity threshold: medium, high, critical"
+    Write-Host "========================================"
+
     Write-Host "Starting FoodLoop preview server..."
 
     $server = Start-Process `
@@ -47,7 +62,7 @@ try {
 
     for ($i = 0; $i -lt 30; $i++) {
         if ($server.HasExited) {
-            throw "FoodLoop preview server exited early. Check nuclei-preview-error.log."
+            throw "SCAN ERROR: Preview server stopped. Check preview logs."
         }
 
         try {
@@ -62,36 +77,61 @@ try {
             }
         }
         catch {
-            # The preview server may need more time to start.
+            # Give the preview server time to start.
         }
 
         Start-Sleep -Seconds 1
     }
 
     if (!$ready) {
-        throw "FoodLoop preview did not respond at $target. Check the preview logs."
+        throw "SCAN ERROR: FoodLoop preview did not respond at $target"
     }
 
-    Write-Host "FoodLoop is responding. Starting Nuclei..."
+    Write-Host "Preview is responding. Running Nuclei checks..."
 
     & $nuclei `
         -u $target `
-        -tags tech `
+        -tags misconfig,exposure `
+        -severity medium,high,critical `
         -no-interactsh `
         -timeout 10 `
         -retries 1 `
         -o $result
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "Nuclei scan failed with exit code $LASTEXITCODE."
+    $scanExitCode = $LASTEXITCODE
+
+    if ($scanExitCode -ne 0) {
+        throw "SCAN ERROR: Nuclei exited with code $scanExitCode."
     }
 
-    Write-Host "Nuclei scan finished."
-    Write-Host "Results file: $result"
+    $findings = @()
 
     if (Test-Path $result) {
-        Get-Content $result
+        $findings = @(
+            Get-Content $result |
+            Where-Object { ![string]::IsNullOrWhiteSpace($_) }
+        )
     }
+
+    Write-Host ""
+    Write-Host "========== SECURITY SCAN SUMMARY =========="
+
+    if ($findings.Count -gt 0) {
+        Write-Host "SECURITY SCAN FAILED"
+        Write-Host "Matching findings: $($findings.Count)"
+        Write-Host "Review the findings below:"
+        $findings | ForEach-Object { Write-Host $_ }
+
+        throw "SECURITY SCAN FAILED: Review nuclei-results.txt."
+    }
+    else {
+        Write-Host "SECURITY SCAN PASSED"
+        Write-Host "No matching findings were reported by the selected checks."
+        Write-Host "This does not guarantee that the application is secure."
+    }
+
+    Write-Host "Report: $result"
+    Write-Host "==========================================="
 }
 finally {
     if ($null -ne $server -and !$server.HasExited) {
