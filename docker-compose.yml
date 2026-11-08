@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: foodloop-backend-docker
+    networks:
+      - foodloop-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: foodloop-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - foodloop-network
+
+networks:
+  foodloop-network:
+    driver: bridge

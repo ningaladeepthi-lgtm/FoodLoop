@@ -43,3 +43,10 @@ Thumbs.db
 # =========================
 dist/
 build/
+# Selenium Maven build output
+selenium-tests/target/
+
+# Security scan output
+nuclei-results.txt
+nuclei-preview.log
+nuclei-preview-error.log
