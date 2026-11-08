@@ -17,9 +17,12 @@ pipeline {
         stage('Docker Connectivity Test') {
             steps {
                 echo 'Checking Docker access from Jenkins...'
+
                 bat 'whoami'
+
                 bat '"C:\\Users\\deepthi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
-                bat '"C:\\Users\\deepthi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" compose version'
+
+                bat '"C:\\Users\\deepthi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker-compose.exe" version'
             }
         }
         stage('Backend Build') {
