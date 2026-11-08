@@ -14,6 +14,14 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Docker Connectivity Test') {
+            steps {
+                echo 'Checking Docker access from Jenkins...'
+                bat 'whoami'
+                bat 'docker version'
+                bat 'docker compose version'
+            }
+        }
 
         stage('Backend Build') {
             steps {
