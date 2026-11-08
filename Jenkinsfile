@@ -91,12 +91,11 @@ pipeline {
                 bat '"C:\\Users\\deepthi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" ps'
             }
         }
-
         stage('Application Readiness Check') {
             steps {
                 echo 'Waiting for FoodLoop frontend to become ready...'
 
-                bat 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference=''Stop''; for ($i=0; $i -lt 30; $i++) { try { $response = Invoke-WebRequest -Uri ''http://localhost:3000'' -UseBasicParsing -TimeoutSec 5; if ($response.StatusCode -eq 200) { Write-Host ''FoodLoop is ready''; exit 0 } } catch { Start-Sleep -Seconds 2 } }; throw ''FoodLoop did not become ready within 60 seconds''"'
+                bat 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "for ($i=0; $i -lt 30; $i++) { try { $response = Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing -TimeoutSec 5; if ($response.StatusCode -eq 200) { Write-Host FoodLoop-is-ready; exit 0 } } catch { Start-Sleep -Seconds 2 } }; exit 1"'
             }
         }
 
