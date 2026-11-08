@@ -18,11 +18,10 @@ pipeline {
             steps {
                 echo 'Checking Docker access from Jenkins...'
                 bat 'whoami'
-                bat 'docker version'
-                bat 'docker compose version'
+                bat '"C:\\Users\\deepthi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version'
+                bat '"C:\\Users\\deepthi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" compose version'
             }
         }
-
         stage('Backend Build') {
             steps {
                 echo 'Building Spring Boot backend...'
